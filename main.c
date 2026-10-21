@@ -53,7 +53,6 @@ int main(int argc, char *argv[]) {
     }
     
     int timer = SDL_GetTicks();
-
     if (!SDL_Init(SDL_INIT_VIDEO)) 
     {
         SDL_Log("Init failed");

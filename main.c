@@ -55,14 +55,122 @@ void Move_player_body(Cell player[]) {
     }
 }
 
-bool Check_fruit_collision(Cell player[], Cell fruits[]) {
+bool Check_fruit_collision(Cell player, Cell fruits[]) {
     for (int i = 0; i < fruit_count; i++) {
-        if (fruits[i].x == player[0].x && fruits[i].y == player[0].y) {
+        if (fruits[i].x == player.x && fruits[i].y == player.y) {
             return true;
         }
     }
     return false;
 }
+
+int Get_manhattan_distance(Cell first, Cell second) {
+    return abs(first.x - second.x) + abs(first.y - second.y);
+}
+
+Cell Get_closest_fruit(Cell player[], Cell fruits[]) {
+    int dist = Get_manhattan_distance(player[0], fruits[0]);
+    Cell closest = fruits[0];
+    for (int i = i; i < fruit_count; i++) {
+        if (Get_manhattan_distance(player[0], fruits[i]) < dist) {
+            closest = fruits[i];
+        }
+    }
+    return closest;
+}
+
+int bfs(Cell player[], Cell fruits[], enum Direction directions[]) {
+    Cell goal_fruit = Get_closest_fruit(player, fruits);
+
+    bool visited[HEIGHT_IN_TILES][WIDTH_IN_TILES] = {{false}};
+    int counter = 0;
+    Cell starting_point = player[0];
+    Cell order[MAX_LENGTH];
+
+    visited[starting_point.y][starting_point.x] = true;
+
+    int front = 0;
+    int back = 0;
+    order[back] = starting_point;
+    back++;
+
+    Cell fruit_pos = {-1, -1};
+
+    int possible_directions[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+    Cell parent[HEIGHT_IN_TILES][WIDTH_IN_TILES];
+
+    while (front < back) {
+        Cell current = order[front];
+        front ++;
+
+        
+
+        if (Check_fruit_collision(current, fruits)) {
+            fruit_pos = current;
+            break;
+        }
+        for (int i = 0 ; i < 4; i ++) {
+            int dx = possible_directions[i][0];
+            int dy = possible_directions[i][1];
+
+            int nx = dx + current.x;
+            int ny = ny;
+
+            if (nx < 0 || nx >= WIDTH_IN_TILES) {
+                continue;
+            }
+            if (ny < 0 || ny >= HEIGHT_IN_TILES) {
+                continue;
+            }
+            if (visited[ny][nx]) {
+                continue;
+            }
+            
+
+            order[back] = (Cell) {
+                nx,
+                ny
+            };
+            back++;
+
+            parent[ny][nx] = current;
+
+            visited[ny][nx] = true;
+
+        }
+        //CHECK FOR PLAYER TAIL COLLISION LATER
+        
+
+    }
+    enum Direction path[MAX_LENGTH];
+    Cell current = goal_fruit;
+    
+    int i = 0;
+    while (current.x != player[0].x && current.y != player[0].y) {
+        Cell past = parent[current.y][current.x];
+        int dx = past.x - current.x;
+        int dy = past.y - current.y;
+
+        if (dx == -1) {
+            path[i] = RIGHT;
+        }
+        if (dx == 1) {
+            path[i] = LEFT;
+        }
+        if (dy == -1) {
+            path[i] = UP;
+        }
+        if (dy == 1) {
+            path[i] = DOWN;
+        }
+        i++;
+
+    }
+    //REVERSE path, return length, implement directions to snake movement.
+
+}
+
 
 bool Check_wall_collision(Cell player[]) {
     if (player[0].x < 0 || player[0].x >= WIDTH_IN_TILES ||
@@ -105,6 +213,29 @@ int main(int argc, char *argv[]) {
     Cell fruits[MAX_LENGTH];
 
     enum Direction player_direction = RIGHT;
+
+    enum Direction directions[] = {
+        UP,
+        UP,
+        RIGHT,
+        RIGHT,
+        RIGHT,
+        RIGHT,
+        DOWN,
+        DOWN,
+        DOWN,
+        LEFT,
+        LEFT,
+        LEFT,
+        LEFT,
+    }; 
+
+    int moves_length = sizeof(directions) / sizeof(directions[0]);
+
+    int move_counter = 0;
+
+    //IF MANUAL OR NOT
+    bool isAutomatic = true;
 
     // Initialize player and fruits
     Reset_game(player, fruits, &player_direction);
@@ -156,7 +287,12 @@ int main(int argc, char *argv[]) {
             timer = SDL_GetTicks();
             
             Move_player_body(player);
-            Move_player_head(player, player_direction);
+            if (isAutomatic) {
+                Move_player_head(player, directions[move_counter % moves_length]);
+                move_counter++;
+            } else {
+                Move_player_head(player, player_direction);
+            }
 
             // Check collision
             if (Check_wall_collision(player) || Check_self_collision(player)) {
@@ -164,7 +300,7 @@ int main(int argc, char *argv[]) {
             }
 
             // Check fruit
-            if (Check_fruit_collision(player, fruits)) {
+            if (Check_fruit_collision(player[0], fruits)) {
                 if (player_length < MAX_LENGTH) {
                     player_length++;
                 }
